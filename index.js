@@ -49,7 +49,6 @@ const qh = new QueueHelper(queue, {attempts, delay}, (job, done) => {
       logger.info(`saving challenge ${challenge.id} without details to file`);
       resultsFolder = resultsFolderPartial;
       logger.debug(challengeDetail);
-      done();
     }
 
     saveFile(`${resultsFolder}/${challenge.id}.json`, challenge, done);
@@ -57,7 +56,7 @@ const qh = new QueueHelper(queue, {attempts, delay}, (job, done) => {
     // console.log(util.inspect(callErr, {showHidden: false, depth: null}));
     logger.error(callErr);
     saveFile(`${resultsFolderError}/${challenge.id}.json`, challenge, done);
-    done();
+    done(new Error('needs to retry'));
   });
 });
 
