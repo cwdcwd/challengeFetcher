@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const util = require('util');
 const _ = require('lodash');
 const requestPromise = require('request-promise-native');
 const logger = require('winston');
@@ -11,7 +10,7 @@ const QueueHelper = require('./queueHelper');
 const queue = kue.createQueue();
 
 const attempts = 3;
-const delay = 500;
+const delay = 250;
 const challengeURL = 'https://api.topcoder.com/v3/challenges';
 const challengeListFile = 'prod_challenges.json';
 const resultsFolderFull = './challenges/full';
@@ -42,8 +41,8 @@ const qh = new QueueHelper(queue, {attempts, delay}, (job, done) => {
 
   requestPromise(options).then((challengeDetail) => {
     let resultsFolder = resultsFolderFull;
-    // console.log(util.inspect(challengeDetail, {showHidden: false, depth: null}));
-    if (challengeDetail.result && challengeDetail.result.content && challengeDetail.success && challengeDetail.status === '200') { // CWD-- so ridic...
+
+    if (challengeDetail.result && challengeDetail.result.content && challengeDetail.result.success && challengeDetail.result.status === '200') { // CWD-- so ridic...
       logger.info(`saving challenge ${challenge.id} details to file`);
       challenge = _.merge(challenge, challengeDetail.result.content); // CWD-- merge the details into challenge
     } else {
