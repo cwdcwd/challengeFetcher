@@ -10,13 +10,29 @@ const QueueHelper = require('./queueHelper');
 
 const queue = kue.createQueue();
 
+const attempts = 3;
+const delay = 500;
 const challengeURL = 'https://api.topcoder.com/v3/challenges';
 const challengeListFile = 'prod_challenges.json';
-const resultsFolderFull = './challenges-full';
-const resultsFolderPartial = './challenges-partial';
+const resultsFolderFull = './challenges/full';
+const resultsFolderPartial = './challenges/partial';
+const resultsFolderError = './challenges/error';
+const resultsFolderDeleted = './challenges/deleted';
 
-const qh = new QueueHelper(queue, {attempts: 3, delay: 1000}, (job, done) => {
-  const challenge = job.data;
+
+function saveFile(filename, challenge, cb) {
+  fs.writeFile(filename, JSON.stringify(challenge), (writeErr) => {
+    if (writeErr) {
+      logger.error(writeErr);
+    }
+
+    logger.info(`saved challenge ${challenge.id} to file`);
+    cb();
+  });
+}
+
+const qh = new QueueHelper(queue, {attempts, delay}, (job, done) => {
+  let challenge = job.data;
   logger.info(`calling for data for ${challenge.id}`);
 
   const options = {
@@ -27,8 +43,9 @@ const qh = new QueueHelper(queue, {attempts: 3, delay: 1000}, (job, done) => {
   requestPromise(options).then((challengeDetail) => {
     let resultsFolder = resultsFolderFull;
     // console.log(util.inspect(challengeDetail, {showHidden: false, depth: null}));
-    if (challengeDetail.result && challengeDetail.success && challengeDetail.status === '200') {
+    if (challengeDetail.result && challengeDetail.result.content && challengeDetail.success && challengeDetail.status === '200') { // CWD-- so ridic...
       logger.info(`saving challenge ${challenge.id} details to file`);
+      challenge = _.merge(challenge, challengeDetail.result.content); // CWD-- merge the details into challenge
     } else {
       logger.info(`saving challenge ${challenge.id} without details to file`);
       resultsFolder = resultsFolderPartial;
@@ -36,17 +53,11 @@ const qh = new QueueHelper(queue, {attempts: 3, delay: 1000}, (job, done) => {
       done();
     }
 
-    fs.writeFile(`${resultsFolder}/${challenge.id}.json`, _.merge(challenge, challengeDetail), (writeErr) => {
-      if (writeErr) {
-        logger.error(writeErr);
-      }
-
-      logger.info(`saved challenge ${challenge.id} to file`);
-      done();
-    });
+    saveFile(`${resultsFolder}/${challenge.id}.json`, challenge, done);
   }).catch((callErr) => {
-    console.log(util.inspect(callErr, {showHidden: false, depth: null}));
+    // console.log(util.inspect(callErr, {showHidden: false, depth: null}));
     logger.error(callErr);
+    saveFile(`${resultsFolderError}/${challenge.id}.json`, challenge, done);
     done();
   });
 });
@@ -66,6 +77,7 @@ fs.readFile(challengeListFile, (err, data) => {
   _.forEach(challengeList, (challenge) => {
     if (challenge.status === 'Deleted') {
       logger.info(`skipping challenge ${challenge.id} as it's deleted`);
+      saveFile(`${resultsFolderDeleted}/${challenge.id}.json`, challenge, _.noop);
     } else {
       logger.info(`loading challenge ${challenge.id} to queue`);
       qh.enqueue(challenge, (queueingErr, job) => {
