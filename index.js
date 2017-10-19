@@ -42,7 +42,7 @@ const qh = new QueueHelper(queue, {attempts, delay}, (job, done) => {
   requestPromise(options).then((challengeDetail) => {
     let resultsFolder = resultsFolderFull;
 
-    if (challengeDetail.result && challengeDetail.result.content && challengeDetail.result.success && challengeDetail.result.status === '200') { // CWD-- so ridic...
+    if (challengeDetail.result && challengeDetail.result.content && challengeDetail.result.success && challengeDetail.result.status.toString() === '200') { // CWD-- so ridic...
       logger.info(`saving challenge ${challenge.id} details to file`);
       challenge = _.merge(challenge, challengeDetail.result.content); // CWD-- merge the details into challenge
     } else {
