@@ -27,13 +27,7 @@ QueueHelper.prototype.enqueue = function enqueue(challenge, onSave) {
   const self = this;
 
   const job = self.queue.create(self.jobType, challenge).delay(self.msDelay).save((err) => {
-    if (err) {
-      console.log(err);
-      onSave(err);
-    } else {
-      console.log(job.id);
-      onSave(null, job);
-    }
+    onSave(err, job);
   });
 
   job.attempts(self.attempts).backoff({
