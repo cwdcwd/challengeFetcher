@@ -1,0 +1,26 @@
+{
+  "name": "@lazybaer/challengefetcher",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "lazybaer",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-eslint": "^8.0.1",
+    "cross-env": "^5.1.0",
+    "eslint-config-topcoder": "^2.0.0",
+    "eslint-plugin-babel": "^4.1.2",
+    "eslint-plugin-react": "^7.4.0"
+  },
+  "dependencies": {
+    "kue": "^0.11.6",
+    "lodash": "^4.17.4",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
+    "winston": "^2.4.0"
+  }
+}
